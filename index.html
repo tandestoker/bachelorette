@@ -8,24 +8,27 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Figtree:wght@400;500;600;700&display=swap">
 <style>
-/* Layout: one phone-width column — who are you, paint your dates, see the best weekend. */
+/* Layout: one phone-width column — who are you, tap when you can, see the best moments. */
 :root{
   --bg:#f6f1f7; --surface:#ffffff; --surface-2:#efe7f2; --ink:#2a1630; --muted:#7a6a80; --line:#e2d6e6;
-  --accent:#7b3fe0; --accent-ink:#ffffff; --accent-soft:#ece2fd;
-  --yes:#2a9a66; --yes-soft:#d8f2e5; --maybe:#d99412; --maybe-soft:#fbedcd; --no:#d2405a; --no-soft:#fadbe1; --none:#d9cfdd;
+  --accent:#7b3fe0; --accent-ink:#ffffff;
+  --day:#2a9a66; --day-soft:#d8f2e5;
+  --mid:#d98a0b; --mid-soft:#fdeccb;
+  --eve:#3d4fc4; --eve-soft:#dfe3fb;
+  --none:#d9cfdd;
   --display:"Bricolage Grotesque", "Avenir Next", system-ui, sans-serif;
   --body:"Figtree", system-ui, -apple-system, "Segoe UI", sans-serif;
   --r:14px;
 }
 @media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
   --bg:#1a1020; --surface:#24172b; --surface-2:#2e2036; --ink:#f3eaf6; --muted:#ab9bb2; --line:#3c2d45;
-  --accent:#a77bff; --accent-ink:#1a1020; --accent-soft:#35254a;
-  --yes:#4cc98f; --yes-soft:#1d3a2d; --maybe:#f0b445; --maybe-soft:#3e321a; --no:#f06a82; --no-soft:#45202a; --none:#4a3b52;
+  --accent:#a77bff; --accent-ink:#1a1020;
+  --day:#4cc98f; --day-soft:#1d3a2d; --mid:#f0b445; --mid-soft:#3e321a; --eve:#8c9bff; --eve-soft:#262c55; --none:#4a3b52;
   color-scheme:dark}}
 :root[data-theme="dark"]{
   --bg:#1a1020; --surface:#24172b; --surface-2:#2e2036; --ink:#f3eaf6; --muted:#ab9bb2; --line:#3c2d45;
-  --accent:#a77bff; --accent-ink:#1a1020; --accent-soft:#35254a;
-  --yes:#4cc98f; --yes-soft:#1d3a2d; --maybe:#f0b445; --maybe-soft:#3e321a; --no:#f06a82; --no-soft:#45202a; --none:#4a3b52;
+  --accent:#a77bff; --accent-ink:#1a1020;
+  --day:#4cc98f; --day-soft:#1d3a2d; --mid:#f0b445; --mid-soft:#3e321a; --eve:#8c9bff; --eve-soft:#262c55; --none:#4a3b52;
   color-scheme:dark}
 *{box-sizing:border-box}
 [hidden]{display:none!important}
@@ -34,17 +37,17 @@ body{margin:0;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-a
 .wrap{max-width:560px;margin:0 auto;padding-block:20px 48px;padding-left:max(16px, env(safe-area-inset-left, 0px));padding-right:max(16px, env(safe-area-inset-right, 0px));display:flex;flex-direction:column;gap:22px}
 header .eyebrow{font-size:12px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--accent)}
 h1{font-family:var(--display);font-weight:800;font-size:clamp(30px,8vw,40px);line-height:1.02;margin:4px 0 8px;text-wrap:balance;letter-spacing:-.01em}
-header p{margin:0;color:var(--muted);max-width:42ch}
+header p{margin:0;color:var(--muted);max-width:44ch}
 h2{font-family:var(--display);font-weight:600;font-size:19px;margin:0;text-wrap:balance}
 section{display:flex;flex-direction:column;gap:12px}
 .hint{font-size:13px;color:var(--muted);margin:0}
 .status{font-size:13px;padding:10px 12px;border-radius:10px;background:var(--surface-2);color:var(--muted)}
-.status.warn{background:var(--no-soft);color:var(--ink)}
+.status.warn{background:var(--mid-soft);color:var(--ink)}
 
 /* names */
 .names{display:flex;flex-wrap:wrap;gap:8px}
 .name{appearance:none;border:1.5px solid var(--line);background:var(--surface);color:var(--ink);font:600 15px var(--body);padding:9px 14px;border-radius:999px;cursor:pointer;display:inline-flex;align-items:center;gap:6px;min-height:42px}
-.name .tick{font-size:12px;color:var(--yes)}
+.name .tick{font-size:12px;color:var(--day)}
 .name[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
 .name[aria-pressed="true"] .tick{color:var(--accent-ink)}
 .names.nudge .name{animation:nudge .5s}
@@ -52,74 +55,68 @@ section{display:flex;flex-direction:column;gap:12px}
 
 /* brush */
 .brush{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;background:var(--surface-2);padding:5px;border-radius:12px}
-.brush button{appearance:none;border:0;background:transparent;color:var(--ink);font:600 14px var(--body);padding:10px 4px;border-radius:9px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;min-height:44px}
-.brush button .g{width:22px;height:22px;border-radius:50%;display:grid;place-items:center;font-size:13px;font-weight:700;color:#fff}
-.brush [data-v="y"] .g{background:var(--yes)} .brush [data-v="m"] .g{background:var(--maybe)} .brush [data-v="n"] .g{background:var(--no)}
+.brush button{appearance:none;border:0;background:transparent;color:var(--ink);font:600 14px var(--body);padding:10px 4px;border-radius:9px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:7px;min-height:44px}
+.brush .sw{width:14px;height:14px;border-radius:4px}
 .brush button[aria-pressed="true"]{background:var(--surface);box-shadow:0 1px 3px rgba(40,10,50,.14)}
 
 /* calendar */
 .cal{background:var(--surface);border-radius:var(--r);padding:12px 10px 14px;border:1px solid var(--line)}
-.cal-head{display:flex;justify-content:space-between;align-items:baseline;padding:0 4px 8px}
+.cal-head{display:flex;justify-content:space-between;align-items:baseline;padding:0 4px 8px;gap:8px}
 .cal-head b{font-family:var(--display);font-size:17px;font-weight:600}
-.cal-head span{font-size:12px;color:var(--muted)}
+.cal-head span{font-size:12px;color:var(--muted);text-align:right}
 .grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:5px}
 .dow{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);text-align:center;padding-bottom:2px}
-.dow.we{color:var(--muted)}
-.day{appearance:none;border:1.5px solid transparent;background:var(--surface-2);color:var(--ink);border-radius:10px;aspect-ratio:1/1.12;max-width:100%;padding:5px 2px 6px;display:flex;flex-direction:column;align-items:center;justify-content:space-between;cursor:pointer;font:inherit;position:relative;min-width:0}
+.day{appearance:none;border:1.5px solid transparent;background:var(--surface-2);color:var(--ink);border-radius:10px;aspect-ratio:1/1.15;max-width:100%;padding:5px 2px 6px;display:flex;flex-direction:column;align-items:center;justify-content:space-between;cursor:pointer;font:inherit;min-width:0;overflow:hidden}
 .day .n{font-weight:700;font-size:15px;font-variant-numeric:tabular-nums;line-height:1}
-.day .mine{font-size:12px;font-weight:800;line-height:1;height:12px}
+.day .mine{font-size:10px;font-weight:800;line-height:1;height:11px;letter-spacing:.02em;white-space:nowrap}
 .day .dots{display:flex;gap:2px;flex-wrap:wrap;justify-content:center;max-width:100%}
 .day .dots i{width:4px;height:4px;border-radius:50%;background:var(--none)}
-.dots i.y{background:var(--yes)} .dots i.m{background:var(--maybe)} .dots i.n{background:var(--no)}
-.day.v-y{background:var(--yes-soft);border-color:var(--yes)} .day.v-y .mine{color:var(--yes)}
-.day.v-m{background:var(--maybe-soft);border-color:var(--maybe)} .day.v-m .mine{color:var(--maybe)}
-.day.v-n{background:var(--no-soft);border-color:var(--no)} .day.v-n .mine{color:var(--no)}
+.dots i.D{background:var(--day)} .dots i.M{background:var(--mid)} .dots i.A{background:var(--eve)}
+.dots i.MA{background:linear-gradient(90deg,var(--mid) 50%,var(--eve) 50%)}
+.day.v-D{background:var(--day-soft);border-color:var(--day)} .day.v-D .mine{color:var(--day)}
+.day.v-M{background:var(--mid-soft);border-color:var(--mid)} .day.v-M .mine{color:var(--mid)}
+.day.v-A{background:var(--eve-soft);border-color:var(--eve)} .day.v-A .mine{color:var(--eve)}
+.day.v-MA{background:linear-gradient(135deg,var(--mid-soft) 50%,var(--eve-soft) 50%);border-color:var(--eve)} .day.v-MA .mine{color:var(--ink)}
 .day.today .n{text-decoration:underline;text-underline-offset:3px;text-decoration-thickness:2px}
 .day:disabled{opacity:.35;cursor:default}
 .day.blank{visibility:hidden}
-.day:focus-visible,.name:focus-visible,.brush button:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.day:focus-visible,.name:focus-visible,.brush button:focus-visible,.seg button:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
 .legend{display:flex;flex-wrap:wrap;gap:12px;font-size:12px;color:var(--muted);padding:10px 4px 0}
 .legend span{display:inline-flex;align-items:center;gap:5px}
 .legend i{width:8px;height:8px;border-radius:50%;display:inline-block}
 
-/* weekends */
-.wk{display:flex;flex-direction:column;gap:10px}
-.wkcard{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:14px;display:flex;flex-direction:column;gap:10px}
-.wkcard.best{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent)}
-.wktop{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}
-.wktop .when{font-family:var(--display);font-weight:600;font-size:17px}
-.wktop .sub{font-size:13px;color:var(--muted)}
-.badge{font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;background:var(--accent);color:var(--accent-ink);padding:4px 8px;border-radius:999px;white-space:nowrap}
-.score{font-family:var(--display);font-weight:800;font-size:26px;line-height:1;font-variant-numeric:tabular-nums;white-space:nowrap}
-.score small{font-size:14px;font-weight:600;color:var(--muted)}
-.bar{display:flex;height:8px;border-radius:99px;overflow:hidden;background:var(--surface-2)}
-.bar span{display:block}
-.people{display:flex;flex-wrap:wrap;gap:5px}
-.pp{font-size:12px;font-weight:600;padding:3px 8px;border-radius:999px;background:var(--surface-2);color:var(--muted);display:inline-flex;gap:4px;align-items:center}
-.pp.full{background:var(--yes-soft);color:var(--ink)} .pp.full::before{content:"✓";color:var(--yes)}
-.pp.part{background:var(--maybe-soft);color:var(--ink)} .pp.part::before{content:"~";color:var(--maybe);font-weight:800}
-.pp.no{background:var(--no-soft);color:var(--ink)} .pp.no::before{content:"✕";color:var(--no)}
-
-/* matrix */
-.mx{overflow-x:auto;background:var(--surface);border:1px solid var(--line);border-radius:var(--r)}
-table{border-collapse:separate;border-spacing:0;font-size:13px;font-variant-numeric:tabular-nums}
-th,td{padding:7px 0;text-align:center;min-width:30px;border-bottom:1px solid var(--line)}
-tr:last-child td,tr:last-child th{border-bottom:0}
-thead th{font-size:11px;color:var(--muted);font-weight:600;line-height:1.15}
-thead th.we{color:var(--muted)}
-th.nm{position:sticky;left:0;background:var(--surface);text-align:left;padding:7px 10px 7px 12px;font-weight:600;min-width:84px;z-index:1}
-td.y{color:var(--yes);font-weight:800} td.m{color:var(--maybe);font-weight:800} td.n{color:var(--no);font-weight:800} td.e{color:var(--none)}
-.waiting{font-size:14px}
+/* best moments */
 .sechead{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:10px}
 .seg{display:inline-flex;background:var(--surface-2);padding:4px;border-radius:10px;gap:4px}
 .seg button{appearance:none;border:0;background:transparent;color:var(--muted);font:600 13px var(--body);padding:8px 12px;border-radius:7px;cursor:pointer;min-height:36px}
 .seg button[aria-pressed="true"]{background:var(--surface);color:var(--ink);box-shadow:0 1px 3px rgba(40,10,50,.14)}
-.seg button:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.list{display:flex;flex-direction:column;gap:10px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:14px;display:flex;flex-direction:column;gap:10px}
+.card.best{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent)}
+.ctop{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}
+.when{font-family:var(--display);font-weight:600;font-size:17px}
+.part{display:inline-block;font-family:var(--body);font-size:12px;font-weight:700;padding:2px 8px;border-radius:999px;margin-left:4px;vertical-align:2px}
+.part.M{background:var(--mid-soft);color:var(--ink)} .part.A{background:var(--eve-soft);color:var(--ink)}
+.sub{font-size:13px;color:var(--muted)}
+.badge{font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;background:var(--accent);color:var(--accent-ink);padding:4px 8px;border-radius:999px;white-space:nowrap}
+.score{font-family:var(--display);font-weight:800;font-size:26px;line-height:1;font-variant-numeric:tabular-nums;white-space:nowrap}
+.score small{font-size:14px;font-weight:600;color:var(--muted)}
+.bar{height:8px;border-radius:99px;overflow:hidden;background:var(--surface-2)}
+.bar span{display:block;height:100%;background:var(--day)}
+.people{display:flex;flex-wrap:wrap;gap:5px}
+.pp{font-size:12px;font-weight:600;padding:3px 8px;border-radius:999px;background:var(--surface-2);color:var(--muted)}
+.pp.ok{background:var(--day-soft);color:var(--ink)} .pp.ok::before{content:"✓ ";color:var(--day)}
 .empty{background:var(--surface);border:1px dashed var(--line);border-radius:var(--r);padding:16px;color:var(--muted);font-size:14px}
-.pp.y{background:var(--yes-soft);color:var(--ink)} .pp.y::before{content:"✓";color:var(--yes)}
-.pp.m{background:var(--maybe-soft);color:var(--ink)} .pp.m::before{content:"~";color:var(--maybe);font-weight:800}
-.pp.n{background:var(--no-soft);color:var(--ink)} .pp.n::before{content:"✕";color:var(--no)}
-.waiting b{font-weight:700}
+
+/* matrix */
+.mx{overflow-x:auto;background:var(--surface);border:1px solid var(--line);border-radius:var(--r)}
+table{border-collapse:separate;border-spacing:0;font-size:12px;font-variant-numeric:tabular-nums}
+th,td{padding:7px 2px;text-align:center;min-width:34px;border-bottom:1px solid var(--line);white-space:nowrap}
+tr:last-child td,tr:last-child th{border-bottom:0}
+thead th{font-size:11px;color:var(--muted);font-weight:600;line-height:1.15}
+th.nm{position:sticky;left:0;background:var(--surface);text-align:left;padding:7px 10px 7px 12px;font-weight:600;min-width:84px;z-index:1;font-size:13px}
+td.D{color:var(--day);font-weight:800} td.M{color:var(--mid);font-weight:800} td.A{color:var(--eve);font-weight:800} td.MA{color:var(--ink);font-weight:800} td.e{color:var(--none)}
+.waiting{font-size:14px;margin:0}
 @media (prefers-reduced-motion: reduce){.names.nudge .name{animation:none}}
 </style>
 </head>
@@ -128,10 +125,10 @@ td.y{color:var(--yes);font-weight:800} td.m{color:var(--maybe);font-weight:800} 
   <header>
     <div class="eyebrow">Vrijgezellenweekend · 16 - 18 april</div>
     <h1>Wanneer overleggen we?</h1>
-    <p>Voordat het weekend er is, willen we het een en ander doorspreken. Kies je naam en tik de dagen aan waarop je kunt. Je keuzes worden meteen opgeslagen en iedereen ziet ze.</p>
+    <p>Voordat het weekend er is, willen we het een en ander doorspreken. Kies je naam en tik de momenten aan waarop je kunt. Elk moment telt, ook als het maar een middag of avond is.</p>
   </header>
 
-  <div id="status" class="status" role="status">Stemmen laden…</div>
+  <div id="status" class="status" role="status">Laden…</div>
 
   <section aria-labelledby="h-who">
     <h2 id="h-who">1. Wie ben jij?</h2>
@@ -139,38 +136,39 @@ td.y{color:var(--yes);font-weight:800} td.m{color:var(--maybe);font-weight:800} 
   </section>
 
   <section aria-labelledby="h-cal">
-    <h2 id="h-cal">2. Tik je dagen aan</h2>
+    <h2 id="h-cal">2. Wanneer kun je?</h2>
     <div class="brush" id="brush" role="group" aria-label="Wat wil je invullen?">
-      <button type="button" id="b-y" data-v="y" aria-pressed="true"><span class="g">✓</span>Kan</button>
-      <button type="button" id="b-m" data-v="m" aria-pressed="false"><span class="g">~</span>Misschien</button>
-      <button type="button" id="b-n" data-v="n" aria-pressed="false"><span class="g">✕</span>Kan niet</button>
+      <button type="button" id="b-D" data-v="D" aria-pressed="true"><span class="sw" style="background:var(--day)"></span>Hele dag</button>
+      <button type="button" id="b-M" data-v="M" aria-pressed="false"><span class="sw" style="background:var(--mid)"></span>Middag</button>
+      <button type="button" id="b-A" data-v="A" aria-pressed="false"><span class="sw" style="background:var(--eve)"></span>Avond</button>
     </div>
-    <p class="hint">Tik nog een keer op dezelfde dag om je keuze te wissen. De bolletjes onder elke datum laten zien wat de anderen hebben ingevuld.</p>
+    <p class="hint">Kies hierboven wat je invult en tik dan op de dagen. Middag en avond kun je op dezelfde dag combineren. Tik nog een keer om het weer weg te halen. Dagen die je leeg laat, tellen als niet beschikbaar.</p>
     <div class="cal">
       <div class="cal-head"><b>November 2026</b><span id="calnote"></span></div>
       <div class="grid" id="grid"></div>
       <div class="legend">
-        <span><i style="background:var(--yes)"></i>kan</span>
-        <span><i style="background:var(--maybe)"></i>misschien</span>
-        <span><i style="background:var(--no)"></i>kan niet</span>
-        <span><i style="background:var(--none)"></i>nog niet ingevuld</span>
+        <span><i style="background:var(--day)"></i>hele dag</span>
+        <span><i style="background:var(--mid)"></i>middag</span>
+        <span><i style="background:var(--eve)"></i>avond</span>
+        <span><i style="background:linear-gradient(90deg,var(--mid) 50%,var(--eve) 50%)"></i>middag + avond</span>
       </div>
     </div>
   </section>
 
   <section aria-labelledby="h-best">
     <div class="sechead">
-      <h2 id="h-best">Beste dagen om te overleggen</h2>
+      <h2 id="h-best">Beste momenten</h2>
       <div class="seg" role="group" aria-label="Welke dagen tonen?">
         <button type="button" id="f-wd" aria-pressed="true">Doordeweeks</button>
         <button type="button" id="f-all" aria-pressed="false">Alle dagen</button>
       </div>
     </div>
-    <div class="wk" id="best"></div>
+    <p class="hint">Wie "hele dag" heeft ingevuld, telt mee voor de middag én de avond.</p>
+    <div class="list" id="best"></div>
   </section>
 
   <section aria-labelledby="h-mx">
-    <h2 id="h-mx">Alle stemmen</h2>
+    <h2 id="h-mx">Alle beschikbaarheid</h2>
     <p class="waiting" id="waiting"></p>
     <div class="mx"><table id="matrix"></table></div>
   </section>
@@ -181,32 +179,41 @@ td.y{color:var(--yes);font-weight:800} td.m{color:var(--maybe);font-weight:800} 
 const SUPABASE_URL = "https://xushwktkpiesbxltcdka.supabase.co";
 const SUPABASE_KEY = "sb_publishable_rsgtfW7bi5KU5puaqeEneQ_u0KDKp_H";
 
-const NAMES =["Joanna","Ellen","Kevin","Michiel","Malky","Nina","Timmie"];
-const Y = 2026, M = 10; // November (0-based)
+const NAMES = ["Joanna","Ellen","Kevin","Michiel","Malky","Nina","Timmie"];
+const Y = 2026, M = 10; // november (0-based)
 const DAYS_IN = 30;
 const DOW = ["ma","di","wo","do","vr","za","zo"];
+const VALID = ["D","M","A","MA"]; // hele dag, middag, avond, middag+avond
+const SHORT = { D: "dag", M: "mid", A: "avo", MA: "mid+av" };
+const LONG = { D: "hele dag", M: "middag", A: "avond", MA: "middag en avond" };
 const now = new Date(); const todayMid = new Date(now.getFullYear(), now.getMonth(), now.getDate());
 const dateOf = d => new Date(Y, M, d);
 const key = d => "2026-11-" + String(d).padStart(2, "0");
 const isPast = d => dateOf(d) < todayMid;
-const isWE = d => [0,5,6].includes(dateOf(d).getDay());
+const isWeekend = d => [0, 6].includes(dateOf(d).getDay());
 const dowIdx = d => (dateOf(d).getDay() + 6) % 7;
 const slug = n => n.toLowerCase().replace(/[^a-z0-9]/g, "");
+const has = (v, part) => v === "D" || (v && v.includes(part)); // part: "M" of "A"
 
 let votes = {}; NAMES.forEach(n => votes[n] = {});
 let me = null; try { const s = localStorage.getItem("dp-me"); if (NAMES.includes(s)) me = s; } catch (e) {}
-let brush = "y";
-let canWrite = true, dirty = false, saving = Promise.resolve(), saveTimer = null;
-const configured = !SUPABASE_URL.includes("JOUW-PROJECT") && !SUPABASE_KEY.startsWith("PLAK");
-const API = SUPABASE_URL.replace(/\/$/, "") + "/rest/v1/votes";
-function headers(extra) {
-  const h = { apikey: SUPABASE_KEY, "Content-Type": "application/json", ...extra };
-  if (SUPABASE_KEY.startsWith("eyJ")) h.Authorization = "Bearer " + SUPABASE_KEY; // oude 'anon' key
-  return h;
-}
+let brush = "D", onlyWeekdays = true;
+let dirty = false, saving = Promise.resolve(), saveTimer = null;
 const $ = id => document.getElementById(id);
 const statusEl = $("status");
 function setStatus(text, warn) { statusEl.hidden = !text; statusEl.textContent = text || ""; statusEl.classList.toggle("warn", !!warn); }
+
+const API = SUPABASE_URL.replace(/\/$/, "") + "/rest/v1/votes";
+function headers(extra) {
+  const h = { apikey: SUPABASE_KEY, "Content-Type": "application/json", ...extra };
+  if (SUPABASE_KEY.startsWith("eyJ")) h.Authorization = "Bearer " + SUPABASE_KEY;
+  return h;
+}
+function clean(days) { // alleen geldige waarden van dit formaat bewaren
+  const out = {};
+  if (days && typeof days === "object") for (const [k, v] of Object.entries(days)) if (VALID.includes(v)) out[k] = v;
+  return out;
+}
 
 /* ---------- render ---------- */
 function renderNames() {
@@ -216,71 +223,65 @@ function renderNames() {
     b.type = "button"; b.className = "name"; b.id = "who-" + slug(n);
     b.setAttribute("aria-pressed", String(n === me));
     b.textContent = n;
-    if (Object.keys(votes[n]).length) { const t = document.createElement("span"); t.className = "tick"; t.textContent = "●"; t.title = "heeft gestemd"; b.appendChild(t); }
+    if (Object.keys(votes[n]).length) { const t = document.createElement("span"); t.className = "tick"; t.textContent = "●"; t.title = "heeft ingevuld"; b.appendChild(t); }
     b.onclick = () => { me = n; try { localStorage.setItem("dp-me", n); } catch (e) {} renderAll(); };
     box.appendChild(b);
   });
 }
 function renderGrid() {
   const g = $("grid"); g.innerHTML = "";
-  DOW.forEach((d, i) => { const h = document.createElement("div"); h.className = "dow" + (i >= 4 ? " we" : ""); h.textContent = d; g.appendChild(h); });
+  DOW.forEach(d => { const h = document.createElement("div"); h.className = "dow"; h.textContent = d; g.appendChild(h); });
   for (let i = 0; i < dowIdx(1); i++) { const b = document.createElement("div"); b.className = "day blank"; g.appendChild(b); }
   for (let d = 1; d <= DAYS_IN; d++) {
     const k = key(d), mine = me ? votes[me][k] : null;
     const b = document.createElement("button");
     b.type = "button"; b.id = "d-" + d;
-    b.className = "day" + (isWE(d) ? " we" : "") + (mine ? " v-" + mine : "") + (dateOf(d).getTime() === todayMid.getTime() ? " today" : "");
-    const lbl = { y: "kan", m: "misschien", n: "kan niet" }[mine] || "niet ingevuld";
-    b.setAttribute("aria-label", `${DOW[dowIdx(d)]} ${d} november: ${lbl}`);
+    b.className = "day" + (mine ? " v-" + mine : "") + (dateOf(d).getTime() === todayMid.getTime() ? " today" : "");
+    b.setAttribute("aria-label", `${DOW[dowIdx(d)]} ${d} november: ${mine ? LONG[mine] : "niet ingevuld"}`);
     if (isPast(d)) { b.disabled = true; b.setAttribute("aria-label", `${d} november is al voorbij`); }
     const dots = NAMES.map(n => `<i class="${votes[n][k] || ""}" title="${n}"></i>`).join("");
-    b.innerHTML = `<span class="n">${d}</span><span class="mine">${mine ? { y: "✓", m: "~", n: "✕" }[mine] : ""}</span><span class="dots">${dots}</span>`;
+    b.innerHTML = `<span class="n">${d}</span><span class="mine">${mine ? SHORT[mine] : ""}</span><span class="dots">${dots}</span>`;
     b.onclick = () => tapDay(d);
     g.appendChild(b);
   }
   $("calnote").textContent = me ? "Je vult in als " + me : "Kies eerst je naam";
 }
-let onlyWeekdays = true;
 function renderBest() {
   const box = $("best"); box.innerHTML = "";
   const rows = [];
   for (let d = 1; d <= DAYS_IN; d++) {
-    if (isPast(d)) continue;
-    if (onlyWeekdays && [0,6].includes(dateOf(d).getDay())) continue;
-    const st = {}; NAMES.forEach(n => st[n] = votes[n][key(d)] || "none");
-    const c = v => NAMES.filter(n => st[n] === v).length;
-    rows.push({ d, st, y: c("y"), m: c("m"), n: c("n") });
+    if (isPast(d) || (onlyWeekdays && isWeekend(d))) continue;
+    ["M", "A"].forEach(part => {
+      const ok = NAMES.filter(n => has(votes[n][key(d)], part));
+      if (ok.length) rows.push({ d, part, ok });
+    });
   }
-  const voted = rows.filter(r => r.y + r.m > 0);
-  if (!voted.length) {
-    box.innerHTML = '<div class="empty">Zodra er dagen zijn aangetikt, zie je hier welke dagen het beste uitkomen.</div>';
+  if (!rows.length) {
+    box.innerHTML = '<div class="empty">Zodra er momenten zijn aangetikt, zie je hier wanneer de meeste mensen kunnen.</div>';
     return;
   }
-  voted.sort((a, z) => z.y - a.y || z.m - a.m || a.n - z.n || a.d - z.d);
-  voted.slice(0, 5).forEach((r, i) => {
+  rows.sort((a, z) => z.ok.length - a.ok.length || a.d - z.d || (a.part === "M" ? -1 : 1));
+  rows.slice(0, 6).forEach((r, i) => {
     const card = document.createElement("div");
-    card.className = "wkcard" + (i === 0 ? " best" : "");
-    const pct = x => (x / NAMES.length * 100) + "%";
+    card.className = "card" + (i === 0 ? " best" : "");
     const wd = dateOf(r.d).toLocaleDateString("nl-NL", { weekday: "long" });
     card.innerHTML = `
-      <div class="wktop">
-        <div><div class="when">${wd} ${r.d} november</div>
-        <div class="sub">${r.y} van 7 kunnen${r.m ? ", " + r.m + " misschien" : ""}${r.n ? ", " + r.n + " niet" : ""}</div></div>
-        ${i === 0 ? '<span class="badge">Beste optie</span>' : `<div class="score">${r.y}<small>/7</small></div>`}
+      <div class="ctop">
+        <div><div class="when">${wd} ${r.d} nov <span class="part ${r.part}">${r.part === "M" ? "middag" : "avond"}</span></div>
+        <div class="sub">${r.ok.length === NAMES.length ? "Iedereen kan!" : r.ok.length + " van 7 kunnen"}</div></div>
+        ${i === 0 ? '<span class="badge">Beste optie</span>' : `<div class="score">${r.ok.length}<small>/7</small></div>`}
       </div>
-      <div class="bar" aria-hidden="true">
-        <span style="width:${pct(r.y)};background:var(--yes)"></span><span style="width:${pct(r.m)};background:var(--maybe)"></span><span style="width:${pct(r.n)};background:var(--no)"></span>
-      </div>
-      <div class="people">${NAMES.map(n => `<span class="pp ${r.st[n]}">${n}</span>`).join("")}</div>`;
+      <div class="bar" aria-hidden="true"><span style="width:${r.ok.length / NAMES.length * 100}%"></span></div>
+      <div class="people">${NAMES.map(n => `<span class="pp${r.ok.includes(n) ? " ok" : ""}">${n}</span>`).join("")}</div>`;
     box.appendChild(card);
   });
 }
 function renderMatrix() {
   const t = $("matrix");
   const ds = []; for (let d = 1; d <= DAYS_IN; d++) if (!isPast(d)) ds.push(d);
-  let h = "<thead><tr><th class='nm'>Naam</th>" + ds.map(d => `<th class="${isWE(d) ? "we" : ""}">${DOW[dowIdx(d)]}<br>${d}</th>`).join("") + "</tr></thead><tbody>";
+  let h = "<thead><tr><th class='nm'>Naam</th>" + ds.map(d => `<th>${DOW[dowIdx(d)]}<br>${d}</th>`).join("") + "</tr></thead><tbody>";
   NAMES.forEach(n => {
-    h += `<tr><th class="nm">${n}</th>` + ds.map(d => { const v = votes[n][key(d)]; return `<td class="${v || "e"}">${{ y: "✓", m: "~", n: "✕" }[v] || "·"}</td>`; }).join("") + "</tr>";
+    h += `<tr><th class="nm">${n}</th>` + ds.map(d => { const v = votes[n][key(d)]; return `<td class="${v || "e"}">${v ? SHORT[v] : "·"}</td>`; }).join("") + "</tr>";
   });
   t.innerHTML = h + "</tbody>";
   const missing = NAMES.filter(n => !Object.keys(votes[n]).length);
@@ -288,14 +289,25 @@ function renderMatrix() {
 }
 function renderAll() {
   renderNames(); renderGrid(); renderBest(); renderMatrix();
-  $("f-wd").setAttribute("aria-pressed", String(onlyWeekdays)); $("f-all").setAttribute("aria-pressed", String(!onlyWeekdays));
-  ["y","m","n"].forEach(v => $("b-" + v).setAttribute("aria-pressed", String(v === brush)));
+  VALID.slice(0, 3).forEach(v => $("b-" + v).setAttribute("aria-pressed", String(v === brush)));
+  $("f-wd").setAttribute("aria-pressed", String(onlyWeekdays));
+  $("f-all").setAttribute("aria-pressed", String(!onlyWeekdays));
 }
 
-/* ---------- interaction ---------- */
+/* ---------- interactie ---------- */
+document.querySelectorAll("#brush button").forEach(b => b.onclick = () => { brush = b.dataset.v; renderAll(); });
 $("f-wd").onclick = () => { onlyWeekdays = true; renderAll(); };
 $("f-all").onclick = () => { onlyWeekdays = false; renderAll(); };
-document.querySelectorAll("#brush button").forEach(b => b.onclick = () => { brush = b.dataset.v; renderAll(); });
+
+function nextValue(cur, b) {
+  if (b === "D") return cur === "D" ? null : "D";
+  // middag of avond aan/uit zetten
+  let m = cur === "D" || cur === "M" || cur === "MA";
+  let a = cur === "D" || cur === "A" || cur === "MA";
+  if (cur === "D") { m = false; a = false; } // van hele dag naar alleen het gekozen dagdeel
+  if (b === "M") m = !m; else a = !a;
+  return m && a ? "MA" : m ? "M" : a ? "A" : null;
+}
 function tapDay(d) {
   if (!me) {
     const box = $("names"); box.classList.remove("nudge"); void box.offsetWidth; box.classList.add("nudge");
@@ -303,16 +315,14 @@ function tapDay(d) {
     setStatus("Kies eerst je naam bovenaan, dan kun je dagen aantikken.");
     return;
   }
-  if (!canWrite) return;
-  const k = key(d), cur = votes[me][k];
-  const next = { ...votes[me] };
-  if (cur === brush) delete next[k]; else next[k] = brush;
+  const k = key(d), next = { ...votes[me] };
+  const v = nextValue(next[k], brush);
+  if (v) next[k] = v; else delete next[k];
   votes[me] = next;
   renderAll();
   scheduleSave();
 }
 function scheduleSave() {
-  if (!configured) { setStatus("De database is nog niet ingesteld (SUPABASE_URL en SUPABASE_KEY in index.html).", true); return; }
   dirty = true; setStatus("Opslaan…");
   clearTimeout(saveTimer);
   saveTimer = setTimeout(() => {
@@ -336,7 +346,7 @@ function scheduleSave() {
 /* ---------- data ---------- */
 let loadedOnce = false, loading = false;
 async function load() {
-  if (!configured || loading) return;
+  if (loading) return;
   loading = true;
   try {
     const r = await fetch(API + "?select=name,days", { headers: headers() });
@@ -345,18 +355,17 @@ async function load() {
     rows.forEach(v => {
       if (!v || !NAMES.includes(v.name)) return;
       if (v.name === me && dirty) return; // eigen onopgeslagen tikken niet overschrijven
-      votes[v.name] = v.days && typeof v.days === "object" ? { ...v.days } : {};
+      votes[v.name] = clean(v.days);
     });
-    if (!loadedOnce || statusEl.classList.contains("warn")) { if (!dirty) setStatus(""); }
+    if (!dirty) setStatus("");
     loadedOnce = true;
     renderAll();
   } catch (e) {
     console.error(e);
-    setStatus(loadedOnce ? "Verbinding even kwijt; de stemmen hieronder zijn misschien niet de nieuwste." : "De stemmen konden niet geladen worden. Controleer je verbinding en herlaad de pagina.", true);
+    setStatus(loadedOnce ? "Verbinding even kwijt; wat je hieronder ziet is misschien niet het nieuwste." : "De gegevens konden niet geladen worden. Controleer je verbinding en herlaad de pagina.", true);
   } finally { loading = false; }
 }
 renderAll();
-if (!configured) setStatus("De database is nog niet ingesteld (SUPABASE_URL en SUPABASE_KEY in index.html).", true);
 load();
 setInterval(() => { if (document.visibilityState === "visible") load(); }, 8000);
 document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible") load(); });

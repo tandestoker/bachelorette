@@ -64,14 +64,13 @@ section{display:flex;flex-direction:column;gap:12px}
 .cal-head span{font-size:12px;color:var(--muted)}
 .grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:5px}
 .dow{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);text-align:center;padding-bottom:2px}
-.dow.we{color:var(--accent)}
+.dow.we{color:var(--muted)}
 .day{appearance:none;border:1.5px solid transparent;background:var(--surface-2);color:var(--ink);border-radius:10px;aspect-ratio:1/1.12;max-width:100%;padding:5px 2px 6px;display:flex;flex-direction:column;align-items:center;justify-content:space-between;cursor:pointer;font:inherit;position:relative;min-width:0}
 .day .n{font-weight:700;font-size:15px;font-variant-numeric:tabular-nums;line-height:1}
 .day .mine{font-size:12px;font-weight:800;line-height:1;height:12px}
 .day .dots{display:flex;gap:2px;flex-wrap:wrap;justify-content:center;max-width:100%}
 .day .dots i{width:4px;height:4px;border-radius:50%;background:var(--none)}
 .dots i.y{background:var(--yes)} .dots i.m{background:var(--maybe)} .dots i.n{background:var(--no)}
-.day.we{background:var(--accent-soft)}
 .day.v-y{background:var(--yes-soft);border-color:var(--yes)} .day.v-y .mine{color:var(--yes)}
 .day.v-m{background:var(--maybe-soft);border-color:var(--maybe)} .day.v-m .mine{color:var(--maybe)}
 .day.v-n{background:var(--no-soft);border-color:var(--no)} .day.v-n .mine{color:var(--no)}
@@ -107,10 +106,19 @@ table{border-collapse:separate;border-spacing:0;font-size:13px;font-variant-nume
 th,td{padding:7px 0;text-align:center;min-width:30px;border-bottom:1px solid var(--line)}
 tr:last-child td,tr:last-child th{border-bottom:0}
 thead th{font-size:11px;color:var(--muted);font-weight:600;line-height:1.15}
-thead th.we{color:var(--accent)}
+thead th.we{color:var(--muted)}
 th.nm{position:sticky;left:0;background:var(--surface);text-align:left;padding:7px 10px 7px 12px;font-weight:600;min-width:84px;z-index:1}
 td.y{color:var(--yes);font-weight:800} td.m{color:var(--maybe);font-weight:800} td.n{color:var(--no);font-weight:800} td.e{color:var(--none)}
 .waiting{font-size:14px}
+.sechead{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:10px}
+.seg{display:inline-flex;background:var(--surface-2);padding:4px;border-radius:10px;gap:4px}
+.seg button{appearance:none;border:0;background:transparent;color:var(--muted);font:600 13px var(--body);padding:8px 12px;border-radius:7px;cursor:pointer;min-height:36px}
+.seg button[aria-pressed="true"]{background:var(--surface);color:var(--ink);box-shadow:0 1px 3px rgba(40,10,50,.14)}
+.seg button:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.empty{background:var(--surface);border:1px dashed var(--line);border-radius:var(--r);padding:16px;color:var(--muted);font-size:14px}
+.pp.y{background:var(--yes-soft);color:var(--ink)} .pp.y::before{content:"✓";color:var(--yes)}
+.pp.m{background:var(--maybe-soft);color:var(--ink)} .pp.m::before{content:"~";color:var(--maybe);font-weight:800}
+.pp.n{background:var(--no-soft);color:var(--ink)} .pp.n::before{content:"✕";color:var(--no)}
 .waiting b{font-weight:700}
 @media (prefers-reduced-motion: reduce){.names.nudge .name{animation:none}}
 </style>
@@ -119,8 +127,8 @@ td.y{color:var(--yes);font-weight:800} td.m{color:var(--maybe);font-weight:800} 
 <div class="wrap">
   <header>
     <div class="eyebrow">Vrijgezellenweekend · 16 - 18 april</div>
-    <h1>Wanneer kun jij?</h1>
-    <p>Kies je naam, tik daarna op de dagen in de kalender. Je keuzes worden meteen opgeslagen en iedereen ziet ze.</p>
+    <h1>Wanneer overleggen we?</h1>
+    <p>Voordat het weekend er is, willen we het een en ander doorspreken. Kies je naam en tik de dagen aan waarop je kunt. Je keuzes worden meteen opgeslagen en iedereen ziet ze.</p>
   </header>
 
   <div id="status" class="status" role="status">Stemmen laden…</div>
@@ -150,10 +158,15 @@ td.y{color:var(--yes);font-weight:800} td.m{color:var(--maybe);font-weight:800} 
     </div>
   </section>
 
-  <section aria-labelledby="h-wk">
-    <h2 id="h-wk">Beste weekend (vr t/m zo)</h2>
-    <p class="hint">✓ = kan alle drie de dagen · ~ = deels of misschien · ✕ = kan minstens één dag niet</p>
-    <div class="wk" id="weekends"></div>
+  <section aria-labelledby="h-best">
+    <div class="sechead">
+      <h2 id="h-best">Beste dagen om te overleggen</h2>
+      <div class="seg" role="group" aria-label="Welke dagen tonen?">
+        <button type="button" id="f-wd" aria-pressed="true">Doordeweeks</button>
+        <button type="button" id="f-all" aria-pressed="false">Alle dagen</button>
+      </div>
+    </div>
+    <div class="wk" id="best"></div>
   </section>
 
   <section aria-labelledby="h-mx">
@@ -164,10 +177,9 @@ td.y{color:var(--yes);font-weight:800} td.m{color:var(--maybe);font-weight:800} 
 </div>
 
 <script>
-/* ===== Vul hier je eigen Supabase-gegevens in (Project Settings → API) ===== */
+/* Supabase-gegevens (publishable key, mag openbaar) */
 const SUPABASE_URL = "https://xushwktkpiesbxltcdka.supabase.co";
 const SUPABASE_KEY = "sb_publishable_rsgtfW7bi5KU5puaqeEneQ_u0KDKp_H";
-/* ======================================================================= */
 
 const NAMES =["Joanna","Ellen","Kevin","Michiel","Malky","Nina","Timmie"];
 const Y = 2026, M = 10; // November (0-based)
@@ -228,40 +240,36 @@ function renderGrid() {
   }
   $("calnote").textContent = me ? "Je vult in als " + me : "Kies eerst je naam";
 }
-function weekendBlocks() {
-  const out = [];
-  for (let d = 1; d <= DAYS_IN; d++) if (dateOf(d).getDay() === 5 && d + 2 <= DAYS_IN && !isPast(d + 2)) out.push([d, d + 1, d + 2]);
-  return out;
-}
-function personWeekend(n, block) {
-  const vs = block.map(d => votes[n][key(d)]);
-  if (vs.some(v => v === "n")) return "no";
-  if (vs.every(v => v === "y")) return "full";
-  if (vs.some(v => v)) return "part";
-  return "none";
-}
-function renderWeekends() {
-  const box = $("weekends"); box.innerHTML = "";
-  const rows = weekendBlocks().map(b => {
-    const st = {}; NAMES.forEach(n => st[n] = personWeekend(n, b));
-    const c = s => NAMES.filter(n => st[n] === s).length;
-    return { b, st, full: c("full"), part: c("part"), no: c("no"), none: c("none") };
-  });
-  const sorted = [...rows].sort((a, z) => z.full - a.full || z.part - a.part || a.no - z.no || a.b[0] - z.b[0]);
-  const anyVotes = rows.some(r => r.none < NAMES.length);
-  const best = anyVotes && sorted[0].full + sorted[0].part > 0 ? sorted[0] : null;
-  sorted.forEach(r => {
+let onlyWeekdays = true;
+function renderBest() {
+  const box = $("best"); box.innerHTML = "";
+  const rows = [];
+  for (let d = 1; d <= DAYS_IN; d++) {
+    if (isPast(d)) continue;
+    if (onlyWeekdays && [0,6].includes(dateOf(d).getDay())) continue;
+    const st = {}; NAMES.forEach(n => st[n] = votes[n][key(d)] || "none");
+    const c = v => NAMES.filter(n => st[n] === v).length;
+    rows.push({ d, st, y: c("y"), m: c("m"), n: c("n") });
+  }
+  const voted = rows.filter(r => r.y + r.m > 0);
+  if (!voted.length) {
+    box.innerHTML = '<div class="empty">Zodra er dagen zijn aangetikt, zie je hier welke dagen het beste uitkomen.</div>';
+    return;
+  }
+  voted.sort((a, z) => z.y - a.y || z.m - a.m || a.n - z.n || a.d - z.d);
+  voted.slice(0, 5).forEach((r, i) => {
     const card = document.createElement("div");
-    card.className = "wkcard" + (r === best ? " best" : "");
+    card.className = "wkcard" + (i === 0 ? " best" : "");
     const pct = x => (x / NAMES.length * 100) + "%";
+    const wd = dateOf(r.d).toLocaleDateString("nl-NL", { weekday: "long" });
     card.innerHTML = `
       <div class="wktop">
-        <div><div class="when">vr ${r.b[0]} – zo ${r.b[2]} nov</div>
-        <div class="sub">${r.full} van 7 kunnen het hele weekend${r.part ? ", " + r.part + " deels" : ""}</div></div>
-        ${r === best ? '<span class="badge">Beste optie</span>' : `<div class="score">${r.full}<small>/7</small></div>`}
+        <div><div class="when">${wd} ${r.d} november</div>
+        <div class="sub">${r.y} van 7 kunnen${r.m ? ", " + r.m + " misschien" : ""}${r.n ? ", " + r.n + " niet" : ""}</div></div>
+        ${i === 0 ? '<span class="badge">Beste optie</span>' : `<div class="score">${r.y}<small>/7</small></div>`}
       </div>
       <div class="bar" aria-hidden="true">
-        <span style="width:${pct(r.full)};background:var(--yes)"></span><span style="width:${pct(r.part)};background:var(--maybe)"></span><span style="width:${pct(r.no)};background:var(--no)"></span>
+        <span style="width:${pct(r.y)};background:var(--yes)"></span><span style="width:${pct(r.m)};background:var(--maybe)"></span><span style="width:${pct(r.n)};background:var(--no)"></span>
       </div>
       <div class="people">${NAMES.map(n => `<span class="pp ${r.st[n]}">${n}</span>`).join("")}</div>`;
     box.appendChild(card);
@@ -279,11 +287,14 @@ function renderMatrix() {
   $("waiting").innerHTML = missing.length ? `Nog niet ingevuld: <b>${missing.join(", ")}</b>` : "Iedereen heeft ingevuld 🎉";
 }
 function renderAll() {
-  renderNames(); renderGrid(); renderWeekends(); renderMatrix();
+  renderNames(); renderGrid(); renderBest(); renderMatrix();
+  $("f-wd").setAttribute("aria-pressed", String(onlyWeekdays)); $("f-all").setAttribute("aria-pressed", String(!onlyWeekdays));
   ["y","m","n"].forEach(v => $("b-" + v).setAttribute("aria-pressed", String(v === brush)));
 }
 
 /* ---------- interaction ---------- */
+$("f-wd").onclick = () => { onlyWeekdays = true; renderAll(); };
+$("f-all").onclick = () => { onlyWeekdays = false; renderAll(); };
 document.querySelectorAll("#brush button").forEach(b => b.onclick = () => { brush = b.dataset.v; renderAll(); });
 function tapDay(d) {
   if (!me) {

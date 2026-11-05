@@ -61,7 +61,9 @@ section{display:flex;flex-direction:column;gap:12px}
 
 /* calendar */
 .cal{background:var(--surface);border-radius:var(--r);padding:12px 10px 14px;border:1px solid var(--line)}
-.cal-head{display:flex;justify-content:space-between;align-items:baseline;padding:0 4px 8px;gap:8px}
+.cal-head{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;padding:0 2px 10px;gap:8px}
+.seg button .cnt{font-size:11px;font-weight:700;color:var(--accent);margin-left:4px}
+.grid{touch-action:pan-y}
 .cal-head b{font-family:var(--display);font-size:17px;font-weight:600}
 .cal-head span{font-size:12px;color:var(--muted);text-align:right}
 .grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:5px}
@@ -142,9 +144,15 @@ td.D{color:var(--day);font-weight:800} td.M{color:var(--mid);font-weight:800} td
       <button type="button" id="b-M" data-v="M" aria-pressed="false"><span class="sw" style="background:var(--mid)"></span>Middag</button>
       <button type="button" id="b-A" data-v="A" aria-pressed="false"><span class="sw" style="background:var(--eve)"></span>Avond</button>
     </div>
-    <p class="hint">Kies hierboven wat je invult en tik dan op de dagen. Middag en avond kun je op dezelfde dag combineren. Tik nog een keer om het weer weg te halen. Dagen die je leeg laat, tellen als niet beschikbaar.</p>
+    <p class="hint">Kies hierboven wat je invult en tik dan op de dagen. Wissel tussen november en december met de knoppen of door te vegen. Middag en avond kun je op dezelfde dag combineren. Tik nog een keer om het weer weg te halen. Dagen die je leeg laat, tellen als niet beschikbaar.</p>
     <div class="cal">
-      <div class="cal-head"><b>November 2026</b><span id="calnote"></span></div>
+      <div class="cal-head">
+        <div class="seg" role="group" aria-label="Maand">
+          <button type="button" id="m-0" aria-pressed="true">November</button>
+          <button type="button" id="m-1" aria-pressed="false">December</button>
+        </div>
+        <span id="calnote"></span>
+      </div>
       <div class="grid" id="grid"></div>
       <div class="legend">
         <span><i style="background:var(--day)"></i>hele dag</span>
@@ -168,7 +176,7 @@ td.D{color:var(--day);font-weight:800} td.M{color:var(--mid);font-weight:800} td
   </section>
 
   <section aria-labelledby="h-mx">
-    <h2 id="h-mx">Alle beschikbaarheid</h2>
+    <h2 id="h-mx">Alle beschikbaarheid · <span id="mxmonth">november</span></h2>
     <p class="waiting" id="waiting"></p>
     <div class="mx"><table id="matrix"></table></div>
   </section>
@@ -180,24 +188,26 @@ const SUPABASE_URL = "https://xushwktkpiesbxltcdka.supabase.co";
 const SUPABASE_KEY = "sb_publishable_rsgtfW7bi5KU5puaqeEneQ_u0KDKp_H";
 
 const NAMES = ["Joanna","Ellen","Kevin","Michiel","Malky","Nina","Timmie"];
-const Y = 2026, M = 10; // november (0-based)
-const DAYS_IN = 30;
+const MONTHS = [ { y: 2026, m: 10, name: "november" }, { y: 2026, m: 11, name: "december" } ]; // m is 0-based
+const daysIn = mo => new Date(MONTHS[mo].y, MONTHS[mo].m + 1, 0).getDate();
+const ALL = []; MONTHS.forEach((_, mo) => { for (let d = 1; d <= daysIn(mo); d++) ALL.push({ mo, d }); });
 const DOW = ["ma","di","wo","do","vr","za","zo"];
 const VALID = ["D","M","A","MA"]; // hele dag, middag, avond, middag+avond
 const SHORT = { D: "dag", M: "mid", A: "avo", MA: "mid+av" };
 const LONG = { D: "hele dag", M: "middag", A: "avond", MA: "middag en avond" };
 const now = new Date(); const todayMid = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-const dateOf = d => new Date(Y, M, d);
-const key = d => "2026-11-" + String(d).padStart(2, "0");
-const isPast = d => dateOf(d) < todayMid;
-const isWeekend = d => [0, 6].includes(dateOf(d).getDay());
-const dowIdx = d => (dateOf(d).getDay() + 6) % 7;
+const dateOf = (mo, d) => new Date(MONTHS[mo].y, MONTHS[mo].m, d);
+const key = (mo, d) => MONTHS[mo].y + "-" + String(MONTHS[mo].m + 1).padStart(2, "0") + "-" + String(d).padStart(2, "0");
+const isPast = (mo, d) => dateOf(mo, d) < todayMid;
+const isWeekend = (mo, d) => [0, 6].includes(dateOf(mo, d).getDay());
+const dowIdx = (mo, d) => (dateOf(mo, d).getDay() + 6) % 7;
 const slug = n => n.toLowerCase().replace(/[^a-z0-9]/g, "");
 const has = (v, part) => v === "D" || (v && v.includes(part)); // part: "M" of "A"
 
 let votes = {}; NAMES.forEach(n => votes[n] = {});
 let me = null; try { const s = localStorage.getItem("dp-me"); if (NAMES.includes(s)) me = s; } catch (e) {}
 let brush = "D", onlyWeekdays = true;
+let month = MONTHS.findIndex(x => x.y === now.getFullYear() && x.m === now.getMonth()); if (month < 0) month = 0;
 let dirty = false, saving = Promise.resolve(), saveTimer = null;
 const $ = id => document.getElementById(id);
 const statusEl = $("status");
@@ -230,44 +240,52 @@ function renderNames() {
 }
 function renderGrid() {
   const g = $("grid"); g.innerHTML = "";
+  const mo = month, mname = MONTHS[mo].name;
   DOW.forEach(d => { const h = document.createElement("div"); h.className = "dow"; h.textContent = d; g.appendChild(h); });
-  for (let i = 0; i < dowIdx(1); i++) { const b = document.createElement("div"); b.className = "day blank"; g.appendChild(b); }
-  for (let d = 1; d <= DAYS_IN; d++) {
-    const k = key(d), mine = me ? votes[me][k] : null;
+  for (let i = 0; i < dowIdx(mo, 1); i++) { const b = document.createElement("div"); b.className = "day blank"; g.appendChild(b); }
+  for (let d = 1; d <= daysIn(mo); d++) {
+    const k = key(mo, d), mine = me ? votes[me][k] : null;
     const b = document.createElement("button");
-    b.type = "button"; b.id = "d-" + d;
-    b.className = "day" + (mine ? " v-" + mine : "") + (dateOf(d).getTime() === todayMid.getTime() ? " today" : "");
-    b.setAttribute("aria-label", `${DOW[dowIdx(d)]} ${d} november: ${mine ? LONG[mine] : "niet ingevuld"}`);
-    if (isPast(d)) { b.disabled = true; b.setAttribute("aria-label", `${d} november is al voorbij`); }
+    b.type = "button"; b.id = "d-" + mo + "-" + d;
+    b.className = "day" + (mine ? " v-" + mine : "") + (dateOf(mo, d).getTime() === todayMid.getTime() ? " today" : "");
+    b.setAttribute("aria-label", `${DOW[dowIdx(mo, d)]} ${d} ${mname}: ${mine ? LONG[mine] : "niet ingevuld"}`);
+    if (isPast(mo, d)) { b.disabled = true; b.setAttribute("aria-label", `${d} ${mname} is al voorbij`); }
     const dots = NAMES.map(n => `<i class="${votes[n][k] || ""}" title="${n}"></i>`).join("");
     b.innerHTML = `<span class="n">${d}</span><span class="mine">${mine ? SHORT[mine] : ""}</span><span class="dots">${dots}</span>`;
-    b.onclick = () => tapDay(d);
+    b.onclick = () => tapDay(mo, d);
     g.appendChild(b);
   }
   $("calnote").textContent = me ? "Je vult in als " + me : "Kies eerst je naam";
+  MONTHS.forEach((x, i) => {
+    const btn = $("m-" + i);
+    btn.setAttribute("aria-pressed", String(i === mo));
+    const n = me ? Object.keys(votes[me]).filter(k => k.startsWith(x.y + "-" + String(x.m + 1).padStart(2, "0"))).length : 0;
+    btn.innerHTML = x.name[0].toUpperCase() + x.name.slice(1) + (n ? `<span class="cnt">${n}</span>` : "");
+    btn.title = n ? `Je hebt ${n} dag(en) ingevuld in ${x.name}` : "";
+  });
 }
 function renderBest() {
   const box = $("best"); box.innerHTML = "";
   const rows = [];
-  for (let d = 1; d <= DAYS_IN; d++) {
-    if (isPast(d) || (onlyWeekdays && isWeekend(d))) continue;
+  ALL.forEach(({ mo, d }, idx) => {
+    if (isPast(mo, d) || (onlyWeekdays && isWeekend(mo, d))) return;
     ["M", "A"].forEach(part => {
-      const ok = NAMES.filter(n => has(votes[n][key(d)], part));
-      if (ok.length) rows.push({ d, part, ok });
+      const ok = NAMES.filter(n => has(votes[n][key(mo, d)], part));
+      if (ok.length) rows.push({ mo, d, idx, part, ok });
     });
-  }
+  });
   if (!rows.length) {
     box.innerHTML = '<div class="empty">Zodra er momenten zijn aangetikt, zie je hier wanneer de meeste mensen kunnen.</div>';
     return;
   }
-  rows.sort((a, z) => z.ok.length - a.ok.length || a.d - z.d || (a.part === "M" ? -1 : 1));
+  rows.sort((a, z) => z.ok.length - a.ok.length || a.idx - z.idx || (a.part === "M" ? -1 : 1));
   rows.slice(0, 6).forEach((r, i) => {
     const card = document.createElement("div");
     card.className = "card" + (i === 0 ? " best" : "");
-    const wd = dateOf(r.d).toLocaleDateString("nl-NL", { weekday: "long" });
+    const wd = dateOf(r.mo, r.d).toLocaleDateString("nl-NL", { weekday: "long" });
     card.innerHTML = `
       <div class="ctop">
-        <div><div class="when">${wd} ${r.d} nov <span class="part ${r.part}">${r.part === "M" ? "middag" : "avond"}</span></div>
+        <div><div class="when">${wd} ${r.d} ${MONTHS[r.mo].name.slice(0, 3)} <span class="part ${r.part}">${r.part === "M" ? "middag" : "avond"}</span></div>
         <div class="sub">${r.ok.length === NAMES.length ? "Iedereen kan!" : r.ok.length + " van 7 kunnen"}</div></div>
         ${i === 0 ? '<span class="badge">Beste optie</span>' : `<div class="score">${r.ok.length}<small>/7</small></div>`}
       </div>
@@ -278,10 +296,11 @@ function renderBest() {
 }
 function renderMatrix() {
   const t = $("matrix");
-  const ds = []; for (let d = 1; d <= DAYS_IN; d++) if (!isPast(d)) ds.push(d);
-  let h = "<thead><tr><th class='nm'>Naam</th>" + ds.map(d => `<th>${DOW[dowIdx(d)]}<br>${d}</th>`).join("") + "</tr></thead><tbody>";
+  const mo = month; $("mxmonth").textContent = MONTHS[mo].name;
+  const ds = []; for (let d = 1; d <= daysIn(mo); d++) if (!isPast(mo, d)) ds.push(d);
+  let h = "<thead><tr><th class='nm'>Naam</th>" + ds.map(d => `<th>${DOW[dowIdx(mo, d)]}<br>${d}</th>`).join("") + "</tr></thead><tbody>";
   NAMES.forEach(n => {
-    h += `<tr><th class="nm">${n}</th>` + ds.map(d => { const v = votes[n][key(d)]; return `<td class="${v || "e"}">${v ? SHORT[v] : "·"}</td>`; }).join("") + "</tr>";
+    h += `<tr><th class="nm">${n}</th>` + ds.map(d => { const v = votes[n][key(mo, d)]; return `<td class="${v || "e"}">${v ? SHORT[v] : "·"}</td>`; }).join("") + "</tr>";
   });
   t.innerHTML = h + "</tbody>";
   const missing = NAMES.filter(n => !Object.keys(votes[n]).length);
@@ -296,6 +315,19 @@ function renderAll() {
 
 /* ---------- interactie ---------- */
 document.querySelectorAll("#brush button").forEach(b => b.onclick = () => { brush = b.dataset.v; renderAll(); });
+MONTHS.forEach((_, i) => $("m-" + i).onclick = () => { month = i; renderAll(); });
+(() => { // vegen tussen maanden
+  const g = $("grid"); let x0 = null, y0 = null;
+  g.addEventListener("touchstart", e => { x0 = e.touches[0].clientX; y0 = e.touches[0].clientY; }, { passive: true });
+  g.addEventListener("touchend", e => {
+    if (x0 === null) return;
+    const dx = e.changedTouches[0].clientX - x0, dy = e.changedTouches[0].clientY - y0; x0 = null;
+    if (Math.abs(dx) > 60 && Math.abs(dx) > Math.abs(dy) * 1.5) {
+      const nm = month + (dx < 0 ? 1 : -1);
+      if (nm >= 0 && nm < MONTHS.length) { month = nm; renderAll(); }
+    }
+  }, { passive: true });
+})();
 $("f-wd").onclick = () => { onlyWeekdays = true; renderAll(); };
 $("f-all").onclick = () => { onlyWeekdays = false; renderAll(); };
 
@@ -308,14 +340,14 @@ function nextValue(cur, b) {
   if (b === "M") m = !m; else a = !a;
   return m && a ? "MA" : m ? "M" : a ? "A" : null;
 }
-function tapDay(d) {
+function tapDay(mo, d) {
   if (!me) {
     const box = $("names"); box.classList.remove("nudge"); void box.offsetWidth; box.classList.add("nudge");
     box.scrollIntoView({ behavior: "smooth", block: "center" });
     setStatus("Kies eerst je naam bovenaan, dan kun je dagen aantikken.");
     return;
   }
-  const k = key(d), next = { ...votes[me] };
+  const k = key(mo, d), next = { ...votes[me] };
   const v = nextValue(next[k], brush);
   if (v) next[k] = v; else delete next[k];
   votes[me] = next;
